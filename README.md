@@ -174,6 +174,99 @@ main();
 ]
 
 ```
+# Ejecutar ejemplo de transacción con MongoDB y Node.js desde CMD
+
+Este instructivo te guía paso a paso para crear y ejecutar un ejemplo de transacción entre dos cuentas usando MongoDB y Node.js, todo desde la terminal CMD.
+
+## Requisitos previos
+
+- Tener Node.js instalado correctamente (`node -v`, `npm -v`).
+
+- Usar terminal CMD (no PowerShell ni VS Code).
+
+## 1. Crear carpeta del proyecto
+
+```
+cd %USERPROFILE%\Desktop
+mkdir nodejs-mongo
+cd nodejs-mongo
+```
+## 2. Inicializar proyecto Node.js
+```
+
+npm init -y
+```
+## 3. Instalar el driver de MongoDB
+```
+npm install mongodb
+```
+## 4. Crear el archivo index.js
+Crea el archivo index.js y pega este contenido:
+
+```
+const { MongoClient } = require("mongodb");
+
+async function main() {
+  const client = new MongoClient("mongodb://localhost:27017");
+
+  await client.connect();
+  const db = client.db("miBD");
+  const cuentas = db.collection("cuentas");
+  const session = client.startSession();
+
+  try {
+    session.startTransaction();
+
+    await cuentas.updateOne(
+      { nombre: "Ana" },
+      { $inc: { saldo: -100 } },
+      { session }
+    );
+
+    await cuentas.updateOne(
+      { nombre: "Luis" },
+      { $inc: { saldo: 100 } },
+      { session }
+    );
+
+    await session.commitTransaction();
+    console.log("Transacción exitosa");
+
+  } catch (error) {
+    await session.abortTransaction();
+    console.error("Transacción fallida y revertida:", error);
+  } finally {
+    await session.endSession();
+    await client.close();
+  }
+}
+
+main();
+```
+
+## 5. Insertar datos iniciales en MongoDB
+Abre el shell de MongoDB (mongo) y ejecuta:
+
+```
+use miBD
+
+db.cuentas.insertMany([
+  { nombre: "Ana", saldo: 500 },
+  { nombre: "Luis", saldo: 200 }
+])
+```
+## 6. Ejecutar el código desde CMD
+Vuelve a la carpeta del proyecto y corre:
+
+```
+node index.js
+```
+Resultado esperado
+En consola verás:
+```
+
+Transacción exitosa
+```
 
 
 
