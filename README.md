@@ -125,33 +125,33 @@ async function main() {
   const session = client.startSession();
 
 
-  try {
-    session.startTransaction();
+ try {
+  session.startTransaction();
 
+  await cuentas.updateOne(
+    { nombre: "Ana" },
+    { $inc: { saldo: -100 } },
+    { session }
+  );
 
-    await cuentas.updateOne(
-      { nombre: "Ana" },
-      { $inc: { saldo: -100 } },
-      { session }
-    );
+  await cuentas.updateOne(
+    { nombre: "Luis" },
+    { $inc: { saldo: 100 } },
+    { session }
+  );
 
+  await session.commitTransaction();
+  console.log("✅ Transacción exitosa");
 
-    await cuentas.updateOne(
-      { nombre: "Luis" },
-      { $inc: { saldo: 100 } },
-      { session }
-    );
+} catch (error) {
+  await session.abortTransaction();  // Aquí se revierten los cambios
+  console.error("❌ Transacción falló y fue revertida:", error);
 
-
-    await session.commitTransaction();
-    console.log("✅ Transacción exitosa");
-
-
-  } finally {
-    await session.endSession();
-    await client.close();
-  }
+} finally {
+  await session.endSession();
+  await client.close();
 }
+
 
 
 main();
@@ -160,6 +160,21 @@ main();
 
 
 ```
+
+```javacript
+[
+  {
+    "nombre": "Ana",
+    "saldo": 500
+  },
+  {
+    "nombre": "Luis",
+    "saldo": 200
+  }
+]
+
+```
+
 
 
 
